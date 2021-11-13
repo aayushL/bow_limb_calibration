@@ -8,13 +8,13 @@ import serial.tools.list_ports
 import threading
 
 class plot:
-    def __init__(self, filename, BaudRate):
+    def __init__(self):
         # self.filename = input("Enter file name: ")
-        self.Filename = filename
+        self.Filename = ''
         print(self.Filename)
-        self.itemcode = filename
+        self.itemcode = self.Filename
         self.portName = ''                   # replace this port name by yours!
-        self.baudrate = BaudRate
+        self.baudrate = 9600
         self.windowWidth = 500                       # width of the window displaying the curve
         self.Xm = linspace(0,0,self.windowWidth)          # create array that will contain the relevant time series     
         self.Ym = linspace(0,0,self.windowWidth)
@@ -119,9 +119,8 @@ class plot:
         print('Port found: ', port)
         return port
 
-def execute(Filename):
-    filename = Filename
-    plt = plot(BaudRate=9600, filename=filename)
+def execute():
+    plt = plot()
     port = plt.find_port()
     plt.portName = port
     plt.check_data()

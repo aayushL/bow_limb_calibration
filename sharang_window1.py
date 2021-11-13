@@ -11,6 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import datetime
 from video_plot_initiation_window import Ui_BowAnalyzer
+from plotting import plot, execute
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -53,8 +54,9 @@ class Ui_MainWindow(object):
         self.submit.setText(_translate("MainWindow", "Submit"))
 
     def submit_btn(self):
-        filename = self.txtbox.text()
-        return str(filename)
+        plt = plot()
+        plt.Filename = str(self.txtbox.text())
+        return plt
 
     def get_item(self):
         itemcode = self.txtbox.text()
@@ -74,5 +76,4 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
-    print(ui.submit_btn())
     sys.exit(app.exec_())

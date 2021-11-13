@@ -76,6 +76,7 @@ class Ui_BowAnalyzer(object):
         self.label_2.setObjectName("label_2")
         self.stop_btn.clicked.connect(self.stop_feed)
         self.stop_btn.clicked.connect(self.stop_feed_2)
+        self.start_plot.clicked.connect(self.start_plotting)
         BowAnalyzer.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(BowAnalyzer)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1360, 21))
@@ -104,6 +105,10 @@ class Ui_BowAnalyzer(object):
 
     def stop_feed_2(self):
         self.worker2.stop()
+
+    def start_plotting(self):
+        execute()
+
     def retranslateUi(self, BowAnalyzer):
         _translate = QtCore.QCoreApplication.translate
         BowAnalyzer.setWindowTitle(_translate("BowAnalyzer", "Bow Analyzer"))
