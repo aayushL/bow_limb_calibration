@@ -10,7 +10,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import datetime
-from compound_bow_test_software import Ui_BowAnalyzer
+from video_plot_initiation_window import Ui_BowAnalyzer
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

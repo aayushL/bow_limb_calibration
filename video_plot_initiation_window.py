@@ -21,7 +21,7 @@ class Ui_BowAnalyzer(object):
         self.centralwidget = QtWidgets.QWidget(BowAnalyzer)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 501, 431))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 541, 431))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.cam1 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.cam1.setContentsMargins(0, 0, 0, 0)
@@ -31,7 +31,7 @@ class Ui_BowAnalyzer(object):
         self.cam1_lbl.setObjectName("cam1_lbl")
         self.cam1.addWidget(self.cam1_lbl)
         self.verticalLayoutWidget_2 = QtWidgets.QWidget(self.centralwidget)
-        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(830, 10, 461, 431))
+        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(840, 20, 511, 431))
         self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
         self.cam2 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
         self.cam2.setContentsMargins(0, 0, 0, 0)
@@ -40,12 +40,40 @@ class Ui_BowAnalyzer(object):
         self.cam2_lbl.setText("")
         self.cam2_lbl.setObjectName("cam2_lbl")
         self.cam2.addWidget(self.cam2_lbl)
-        self.start_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.start_btn.setGeometry(QtCore.QRect(630, 120, 75, 23))
-        self.start_btn.setObjectName("start_btn")
         self.stop_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.stop_btn.setGeometry(QtCore.QRect(630, 260, 75, 23))
+        self.stop_btn.setGeometry(QtCore.QRect(640, 180, 111, 51))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(16)
+        self.stop_btn.setFont(font)
         self.stop_btn.setObjectName("stop_btn")
+        self.start_plot = QtWidgets.QPushButton(self.centralwidget)
+        self.start_plot.setGeometry(QtCore.QRect(630, 540, 141, 51))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(16)
+        self.start_plot.setFont(font)
+        self.start_plot.setObjectName("start_plot")
+        self.label = QtWidgets.QLabel(self.centralwidget)
+        self.label.setGeometry(QtCore.QRect(150, 470, 271, 51))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(16)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label.setFont(font)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setObjectName("label")
+        self.label_2 = QtWidgets.QLabel(self.centralwidget)
+        self.label_2.setGeometry(QtCore.QRect(980, 480, 271, 51))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        font.setPointSize(16)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_2.setFont(font)
+        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_2.setObjectName("label_2")
         self.stop_btn.clicked.connect(self.stop_feed)
         self.stop_btn.clicked.connect(self.stop_feed_2)
         BowAnalyzer.setCentralWidget(self.centralwidget)
@@ -56,7 +84,6 @@ class Ui_BowAnalyzer(object):
         self.statusbar = QtWidgets.QStatusBar(BowAnalyzer)
         self.statusbar.setObjectName("statusbar")
         BowAnalyzer.setStatusBar(self.statusbar)
-
         self.worker1 = worker1()
         self.worker1.start()
         self.worker1.imageupdate.connect(self.ImageUpdateSlot)
@@ -64,11 +91,8 @@ class Ui_BowAnalyzer(object):
         self.worker2 = worker2()
         self.worker2.start()
         self.worker2.imageupdate_2.connect(self.ImageUpdateSlot_2)
-
         self.retranslateUi(BowAnalyzer)
         QtCore.QMetaObject.connectSlotsByName(BowAnalyzer)
-        # self.setLayout(self.cam1)
-
     def ImageUpdateSlot(self, Image):
         self.cam1_lbl.setPixmap(QtGui.QPixmap.fromImage(Image))
 
@@ -80,13 +104,13 @@ class Ui_BowAnalyzer(object):
 
     def stop_feed_2(self):
         self.worker2.stop()
-
     def retranslateUi(self, BowAnalyzer):
         _translate = QtCore.QCoreApplication.translate
         BowAnalyzer.setWindowTitle(_translate("BowAnalyzer", "Bow Analyzer"))
-        self.start_btn.setText(_translate("BowAnalyzer", "Start Feed"))
-        self.stop_btn.setText(_translate("BowAnalyzer", "Stop Feed"))
-
+        self.stop_btn.setText(_translate("BowAnalyzer", "Stop"))
+        self.start_plot.setText(_translate("BowAnalyzer", "Start Plotting"))
+        self.label.setText(_translate("BowAnalyzer", "CAM-1"))
+        self.label_2.setText(_translate("BowAnalyzer", "CAM-2"))
 class worker1(QtCore.QThread):
     imageupdate = QtCore.pyqtSignal(QtGui.QImage)
     def run(self):
@@ -136,5 +160,4 @@ if __name__ == "__main__":
     ui = Ui_BowAnalyzer()
     ui.setupUi(BowAnalyzer)
     BowAnalyzer.show()
-    # execute(
     sys.exit(app.exec_())

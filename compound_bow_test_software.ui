@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>501</width>
+      <width>541</width>
       <height>431</height>
      </rect>
     </property>
@@ -36,9 +36,9 @@
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>860</x>
-      <y>10</y>
-      <width>461</width>
+      <x>840</x>
+      <y>20</y>
+      <width>511</width>
       <height>431</height>
      </rect>
     </property>
@@ -61,21 +61,81 @@
       <height>51</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
     <property name="text">
-     <string>Stop Feed</string>
+     <string>Stop</string>
     </property>
    </widget>
    <widget class="QPushButton" name="start_plot">
     <property name="geometry">
      <rect>
-      <x>650</x>
+      <x>630</x>
       <y>540</y>
-      <width>101</width>
+      <width>141</width>
       <height>51</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
     <property name="text">
-     <string>Start Plot</string>
+     <string>Start Plotting</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>470</y>
+      <width>271</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>CAM-1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>980</x>
+      <y>480</y>
+      <width>271</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>CAM-2</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
   </widget>
