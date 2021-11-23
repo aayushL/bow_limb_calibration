@@ -26,15 +26,15 @@ class Ui_PlotWindow(object):
         self.plot_view.setMaximumSize(QtCore.QSize(20000, 20000))
         self.plot_view.setObjectName("plot_view")
         self.verticalLayout.addWidget(self.plot_view)
-        self.stoppltbtn = QtWidgets.QPushButton(self.centralwidget)
+        self.btn_strt = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(16)
         font.setBold(True)
         font.setWeight(75)
-        self.stoppltbtn.setFont(font)
-        self.stoppltbtn.setObjectName("stoppltbtn")
-        self.verticalLayout.addWidget(self.stoppltbtn)
+        self.btn_strt.setFont(font)
+        self.btn_strt.setObjectName("btn_strt")
+        self.verticalLayout.addWidget(self.btn_strt)
         self.savebtn = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setFamily("Calibri")
@@ -60,7 +60,7 @@ class Ui_PlotWindow(object):
     def retranslateUi(self, PlotWindow):
         _translate = QtCore.QCoreApplication.translate
         PlotWindow.setWindowTitle(_translate("PlotWindow", "MainWindow"))
-        self.stoppltbtn.setText(_translate("PlotWindow", "Stop"))
+        self.btn_strt.setText(_translate("PlotWindow", "Start"))
         self.savebtn.setText(_translate("PlotWindow", "Save Results"))
 from pyqtgraph import PlotWidget
 
