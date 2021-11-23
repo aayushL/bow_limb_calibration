@@ -82,7 +82,6 @@ class CameraScreen(QtWidgets.QMainWindow):
 class arduino_data():
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print
         self.port = self.find_port()
         self.BaudRate = 9600
         self.ser = serial.Serial(self.port,self.BaudRate)
@@ -116,7 +115,7 @@ class arduino_data():
         Zm[:-1] = Zm[1:]
         self.value = self.ser.readline().decode('utf-8')# read line (single value) from the serial port
         self.value = self.value.rstrip().split(',')
-        print('Update self.value',self.value)
+        print(self.value)
         Xm[-1] = (float(self.value[0])+240-140)/25.4              # vector containing the instantaneous self.values
         Ym[-1] = float(self.value[1]) * 2.20462
         Zm[-1] = (float(self.value[2]) - 1.66) * 2.20462 
@@ -171,10 +170,10 @@ class plot_window(QtWidgets.QMainWindow):
         self.plot_ui.plot_view.getAxis('bottom').setTextPen('k')
         self.plot_ui.plot_view.setLabel('left', 'Load (lbs)', **styles_lbl)
         self.plot_ui.plot_view.setLabel('bottom', 'Displacement (Inches)', **styles_lbl)
-
-    def update(self, Xm, Ym, Zm, Yi, Zi):       
         self.curve1 = self.plt_item.plot()
-        self.curve2 = self.plt_item.plot()      
+        self.curve2 = self.plt_item.plot()  
+
+    def update(self, Xm, Ym, Zm, Yi, Zi):    
         self.curve1.setData(y=Ym ,x=Xm, pen=None, symbol='o', symbolPen=None, symbolBrush=('r'), PointVisible=True, name='Axial Load (lbs)')                  # set the x acc curve with this data
         self.curve1.setPos(0,Yi)                # set x position in the graph to 0                    
         self.curve2.setData(y=Zm, x=Xm, pen=None, symbol='o', symbolPen=None, symbolBrush=('b'), PointVisible=True, name='Tension (lbs)')                  # set the y acc curve with this data
@@ -191,7 +190,7 @@ class plot_window(QtWidgets.QMainWindow):
         # csv.start()
         # csv.join()
  
-    '''def execute(self):
+    def execute(self):
         # self.port = self.ard_Data.find_port()
         try:
             _, Yi, Zi = self.ard_Data.checkData()
@@ -211,9 +210,9 @@ class plot_window(QtWidgets.QMainWindow):
             try:
                 Xm, Ym, Zm = self.ard_Data.stream_data(A,B,C)
                 self.update(Xm=Xm, Ym=Ym, Yi=Yi, Zm=Zm, Zi=Zi)
-                csv = threading.Thread(target=self.ard_Data.to_csv, args=(Xm, Ym, Zm))
-                csv.start()
-                csv.join()
+                # csv = threading.Thread(target=self.ard_Data.to_csv, args=(Xm, Ym, Zm))
+                # csv.start()
+                # csv.join()
             except Exception as e:
                 msg = QtWidgets.QMessageBox()
                 msg.setIcon(QtWidgets.QMessageBox.Critical)
@@ -221,12 +220,13 @@ class plot_window(QtWidgets.QMainWindow):
                 msg.setInformativeText('More information: {}'.format(e))
                 msg.setWindowTitle("Error")
                 msg.exec_()
-                break'''
+                break
             
     def stop_btn(self):
         if self.plot_check:
             self.plot_check = False
             self.plot_ui.btn_strt.setText('Stop')
+            self.execute()
         else:
             self.plot_ui.btn_strt.setText('Start')
             msg = QtWidgets.QMessageBox()
