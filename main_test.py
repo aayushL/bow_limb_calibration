@@ -7,6 +7,7 @@ from plot_window import Ui_PlotWindow
 # from plotting import plot
 import cv2
 from numpy import *
+import pandas as pd
 from datetime import date as dt
 import time
 import serial
@@ -90,6 +91,7 @@ class arduino_data():
             print('Reading for proper values from sensors...............')
             val = self.ser.readline().decode('utf-8') # read line (single value) from the serial port
             val = val.rstrip().split(',')
+            print('Check Data: ', val)
             Xi = float(val[0])
             Yi = float(val[1])
             Zi = float(val[2])
@@ -120,7 +122,7 @@ class arduino_data():
         Ym[-1] = float(self.value[1]) * 2.20462
         Zm[-1] = (float(self.value[2]) - 1.66) * 2.20462 
         # self.data_signal.emit(self.Ym[-1], self.Ym[-1], Zm[-1])
-        print('disp = {}, Load1 = {}, Load2 = {}'.format(Xm[-1], Ym[-1], Zm[-1]))
+        # print('disp = {}, Tension = {}, Axial = {}'.format(Xm[-1], Ym[-1], Zm[-1]))
         self.ptr += 1
         return Xm, Ym, Zm
 
@@ -170,10 +172,15 @@ class plot_window(QtWidgets.QMainWindow):
         self.plot_ui.plot_view.getAxis('bottom').setTextPen('k')
         self.plot_ui.plot_view.setLabel('left', 'Load (lbs)', **styles_lbl)
         self.plot_ui.plot_view.setLabel('bottom', 'Displacement (Inches)', **styles_lbl)
-        self.curve1 = self.plt_item.plot()
-        self.curve2 = self.plt_item.plot()  
+        self.curve1 = self.plt_item.plot(name='Tension (lbs)')
+        self.curve2 = self.plt_item.plot(name='Axial Load (lbs)')  
 
-    def update(self, Xm, Ym, Zm, Yi, Zi):    
+    def update(self, Xm, Ym, Zm, Yi, Zi):
+        if Yi is None:
+            Yi = Ym[-1]
+        if Zi is None:
+            Zi = Zm[-1]    
+        # print('yi = {},zi = {}, ym = {}, xm = {}, zm = {}'.format(Yi,Zi,Ym,Xm,Zm))
         self.curve1.setData(y=Ym ,x=Xm, pen=None, symbol='o', symbolPen=None, symbolBrush=('r'), PointVisible=True, name='Axial Load (lbs)')                  # set the x acc curve with this data
         self.curve1.setPos(0,Yi)                # set x position in the graph to 0                    
         self.curve2.setData(y=Zm, x=Xm, pen=None, symbol='o', symbolPen=None, symbolBrush=('b'), PointVisible=True, name='Tension (lbs)')                  # set the y acc curve with this data
@@ -183,27 +190,37 @@ class plot_window(QtWidgets.QMainWindow):
         self.plt_item.addLegend()
         self.plot_ui.plot_view.setXRange(0,30)
         self.plot_ui.plot_view.setYRange(-20, 100)
+        x = Xm[-1]
+        y = Ym[-1]
+        z = Zm[-1]
                     # set x position in the graph to 0
         # curve.setPos(ptr,0)                   
+        print(x,y,z)
         QtGui.QApplication.processEvents()    # you MUST process the plot now
-        # csv = threading.Thread(target=self.to_csv, args=(Xm, Ym, Zm))
-        # csv.start()
-        # csv.join()
+        print('disp = {}, Tension = {}, Axial = {}'.format(Xm[-1], Ym[-1], Zm[-1]))
+        csv = threading.Thread(target=self.ard_Data.to_csv, args=(x,y,z))
+        csv.start()
+        csv.join()
  
     def execute(self):
-        # self.port = self.ard_Data.find_port()
+        Yi = None
+        Zi = None
         try:
-            _, Yi, Zi = self.ard_Data.checkData()
+            _, Yi, Zi = self.ard_Data.checkData()                
         except Exception as e:
             print(e)
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Critical)
-            msg.setText("Error!!")
+            msg.setText("Error in check data!!")
             msg.setInformativeText('More information: {}'.format(e))
             msg.setWindowTitle("Error")
             msg.exec_()
             pass
         A,B,C = self.ard_Data.get_data()
+        if Yi is None:
+            Yi = B[-1]
+        if Zi is None:
+            Zi = C[-1]
         print('Please wait while your data is getting fetched..........')
         time.sleep(5)
         while True:
@@ -221,13 +238,23 @@ class plot_window(QtWidgets.QMainWindow):
                 msg.setWindowTitle("Error")
                 msg.exec_()
                 break
-            
+    
+    def poundage(self):
+        time.sleep(5)
+        file = './Data/{}.csv'.format(filename)
+        data = pd.read_csv(file, names=['Disp', 'Tension', 'Axial'])
+        axial = data['Axial']
+        poundage = max(axial)
+        print('Poundage: ', poundage)
+        return poundage
+
     def stop_btn(self):
         if self.plot_check:
             self.plot_check = False
             self.plot_ui.btn_strt.setText('Stop')
             self.execute()
         else:
+            self.plot_check = True
             self.plot_ui.btn_strt.setText('Start')
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Information)
@@ -239,9 +266,11 @@ class plot_window(QtWidgets.QMainWindow):
     def save_btn(self):
         exporter = pyqtgraph.exporters.ImageExporter(self.plt_item)
         exporter.export('./plots/{}.png'.format(filename))
+        self.close()
+        pound = self.poundage()
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Information)
-        msg.setText("Files saved successfully!!")
+        msg.setText("Files saved successfully!! Max axial load = {}".format(pound))
         msg.setWindowTitle("Success!!")
         msg.exec_()
 
