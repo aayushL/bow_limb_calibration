@@ -9,18 +9,29 @@ import cv2
 from numpy import *
 import pandas as pd
 from datetime import date as dt
+import logging
+from logging.handlers import RotatingFileHandler
 import time
 import serial
 import serial.tools.list_ports
 import threading
-import sys
+import queue
+import sys, os
 
+logger = logging.getLogger(__name__)
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+log_file_path = "{}/logs/".format(dir_path)
+log_file_size = 10*1024*1024
+
+q = queue.Queue()
 class startup(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.startup_ui = Ui_StartupWindow()
         self.startup_ui.setupUi(self)
+        logger.info("Setting up startup window")
 
         self.startup_ui.submit_btn.clicked.connect(self.exp_name)
         self.startup_ui.submit_btn.clicked.connect(self.open_camerascreen)
@@ -28,14 +39,17 @@ class startup(QtWidgets.QMainWindow):
     def exp_name(self):
         item_code = str(self.startup_ui.item_code.text())
         part = str(self.startup_ui.cam_no.text())
+        logger.info("Item code and Part code fetched")
         return item_code, part
 
     def open_camerascreen(self):
         global itemcode, part, filename
         itemcode, part = self.exp_name()
         filename = str(dt.today()) + '_' + itemcode + '-' + part
+        logger.info("File name saved: {}".format(filename))
         self.camscreen = CameraScreen()
         self.camscreen.show()
+        logger.info("Opening Video feed screen!!!!")
         self.close()
 
 class CameraScreen(QtWidgets.QMainWindow):
@@ -44,13 +58,16 @@ class CameraScreen(QtWidgets.QMainWindow):
 
         self.cam_ui = Ui_BowAnalyzer()
         self.cam_ui.setupUi(self)
+        logger.info("Setting up video feed window please wait!!!!")
 
         self.worker1 = worker1()
         self.worker1.start()
+        logger.info("Starting worker1 thread")
         self.worker1.imageupdate.connect(self.ImageUpdateSlot)
 
         self.worker2 = worker2()
         self.worker2.start()
+        logger.info("Starting worker2 thread")
         self.worker2.imageupdate_2.connect(self.ImageUpdateSlot_2)
 
         self.cam_ui.start_plot.clicked.connect(self.open_plot)
@@ -66,43 +83,47 @@ class CameraScreen(QtWidgets.QMainWindow):
     
     def stop_feed(self):
         self.worker1.stop()
+        logger.info("Stopping worker1 thread")
         self.cam_ui.cam1_lbl.setStyleSheet('background-color: black')
 
     def stop_feed_2(self):
         self.worker2.stop()
+        logger.info("Stopping worker2 thread")
         self.cam_ui.cam2_lbl.setStyleSheet('background-color: black')
 
     def open_plot(self):
         self.plotscreen = plot_window()
         self.plotscreen.show()
-        # self.work3 = worker3()
-        # self.work3.start()
-        # self.work3.data_signal.connect(self.update)
-        # self.plotscreen.execute()
+        logger.info("Opening Plotter window")
 
 class arduino_data():
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.port = self.find_port()
+        logger.info("Port found: {}".format(self.port))
         self.BaudRate = 9600
         self.ser = serial.Serial(self.port,self.BaudRate)
+        logger.info("Initializing serial port!!!!")
     def checkData(self):
         try:
-            print('Reading for proper values from sensors...............')
+            logger.info("Reading for proper values from sensors...............")
             val = self.ser.readline().decode('utf-8') # read line (single value) from the serial port
+            logger.info("Reading Arduino data from Serial port....")
             val = val.rstrip().split(',')
             print('Check Data: ', val)
             Xi = float(val[0])
             Yi = float(val[1])
             Zi = float(val[2])
+            logger.info("Values fetched properly........")
             return Xi, Yi, Zi
             # print('CHECKDATA.................',self.Xi, self.Yi, self.Zi)
         except Exception as e:
-            print(e)
+            logger.info("Error while cbecking data: {}".format(e))
 
     def get_data(self):
-        print('Creating plot instance..........')
+        logger.info("Getting data for array creation......")
         value = self.ser.readline().decode('utf-8')     # read line (single value) from the serial port
+        logger.info("[GET_DATA] Reading from Arduino")
         value = value.rstrip().split(',')
         self.windowWidth = 500                       # width of the window displaying the curve
         Xm = linspace(0,0,self.windowWidth)          # create array that will contain the relevant time series     
@@ -111,6 +132,7 @@ class arduino_data():
         self.ptr = -self.windowWidth
         # print('GETDATA........LINSPACE.......',Xm, self.Ym, Zm)
         return Xm, Ym, Zm
+
     def stream_data(self, Xm, Ym, Zm):
         Xm[:-1] = Xm[1:]                      # shift data in the temporal mean 1 sample left
         Ym[:-1] = Ym[1:]
@@ -120,20 +142,33 @@ class arduino_data():
         print(self.value)
         Xm[-1] = (float(self.value[0])+240-140)/25.4              # vector containing the instantaneous self.values
         Ym[-1] = float(self.value[1]) * 2.20462
-        Zm[-1] = (float(self.value[2]) - 1.66) * 2.20462 
+        Zm[-1] = (float(self.value[2]) - 1.66) * 2.20462
+        ard_data = {
+            'disp':Xm[-1],
+            'tension':Ym[-1],
+            'axial':Zm[-1]
+        }
         # self.data_signal.emit(self.Ym[-1], self.Ym[-1], Zm[-1])
         # print('disp = {}, Tension = {}, Axial = {}'.format(Xm[-1], Ym[-1], Zm[-1]))
         self.ptr += 1
         return Xm, Ym, Zm
 
+    def queue_data(self, Q):                #Method to put data in queue
+        x,y,z = self.get_data()
+        while True:
+            data = self.stream_data(x,y,z)
+            Q.put(data)
+
     def to_csv(self, x, y, z):
+        logger.info("Writing data to CSV.......")
         data = str(x) + ',' + str(y) + ',' + str(z) + '\n'
         with open('./Data/{}.csv'.format(filename), 'a+') as f:
             f.write(data)
             f.close()
 
     def close_gateway(self):
-        print('CLOSING GATEWAY..........')
+        logger.info("Closing Serial Port for Arduino")
+        print("Closing Serial Port for Arduino")
         self.ser.close()
     
     def find_port(self):
@@ -150,6 +185,7 @@ class plot_window(QtWidgets.QMainWindow):
 
         self.plot_ui = Ui_PlotWindow()
         self.plot_ui.setupUi(self)
+        logger.info("Setting up plotter window")
 
         self.plot_ui.savebtn.clicked.connect(self.save_btn)
         self.plot_ui.btn_strt.clicked.connect(self.stop_btn)
@@ -157,6 +193,7 @@ class plot_window(QtWidgets.QMainWindow):
         self.plot_check = True
 
         self.ard_Data = arduino_data()
+        logger.info("Setting blank pyqtgraph for live plotting.....")
         styles_lbl = {'color':'k', 'font-size': '16px'}
         styles_title = {'color':'k', 'size': '20px'}
         font = QtGui.QFont()
@@ -181,6 +218,7 @@ class plot_window(QtWidgets.QMainWindow):
         if Zi is None:
             Zi = Zm[-1]    
         # print('yi = {},zi = {}, ym = {}, xm = {}, zm = {}'.format(Yi,Zi,Ym,Xm,Zm))
+        logger.info("Plotting Data on UI..........")
         self.curve1.setData(y=Ym ,x=Xm, pen=None, symbol='o', symbolPen=None, symbolBrush=('r'), PointVisible=True, name='Axial Load (lbs)')                  # set the x acc curve with this data
         self.curve1.setPos(0,Yi)                # set x position in the graph to 0                    
         self.curve2.setData(y=Zm, x=Xm, pen=None, symbol='o', symbolPen=None, symbolBrush=('b'), PointVisible=True, name='Tension (lbs)')                  # set the y acc curve with this data
@@ -208,6 +246,7 @@ class plot_window(QtWidgets.QMainWindow):
         try:
             _, Yi, Zi = self.ard_Data.checkData()                
         except Exception as e:
+            logger.error("[EXECUTE] check data error: {}".format(e))
             print(e)
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Critical)
@@ -216,7 +255,11 @@ class plot_window(QtWidgets.QMainWindow):
             msg.setWindowTitle("Error")
             msg.exec_()
             pass
-        A,B,C = self.ard_Data.get_data()
+        try:
+            A,B,C = self.ard_Data.get_data()
+        except Exception as e:
+            logger.error("[EXECUTE] get data error: {}".format(e))
+            pass
         if Yi is None:
             Yi = B[-1]
         if Zi is None:
@@ -335,7 +378,10 @@ class worker3(QtCore.QThread):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(handlers= [RotatingFileHandler(filename="{}production.log".format(log_file_path), mode='w', maxBytes=log_file_size, backupCount=10)],format='%(levelname)s %(asctime)s : %(message)s',datefmt='%d/%m/%Y %I:%M:%S %p')
+    logger.info('Welcome to the Software!!!!')
     app = QtWidgets.QApplication([])
     details_ui = startup()
+    logger.info("Displaying Itemcode window!!!!")
     details_ui.show()
     sys.exit(app.exec_())
